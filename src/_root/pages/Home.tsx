@@ -1,17 +1,16 @@
 import { Models } from "appwrite";
-
-// import { useToast } from "@/components/ui/use-toast";
 import { Loader, PostCard, UserCard } from "@/components/shared";
-import { useGetRecentPosts, useGetUsers } from "@/lib/react-query/queries";
+import { useGetCurrentUser, useGetRecentPosts, useGetUsers } from "@/lib/react-query/queries";
 
 const Home = () => {
-  // const { toast } = useToast();
+  const { data: currentUser } = useGetCurrentUser();
 
   const {
     data: posts,
     isLoading: isPostLoading,
     isError: isErrorPosts,
   } = useGetRecentPosts();
+
   const {
     data: creators,
     isLoading: isUserLoading,
@@ -30,6 +29,11 @@ const Home = () => {
       </div>
     );
   }
+
+  // Filter creators to exclude the current user
+  const filteredCreators = creators?.documents.filter(
+    (creator) => creator.$id !== currentUser?.$id
+  );
 
   return (
     <div className="flex flex-1">
@@ -56,7 +60,7 @@ const Home = () => {
           <Loader />
         ) : (
           <ul className="grid 2xl:grid-cols-2 gap-6">
-            {creators?.documents.map((creator) => (
+            {filteredCreators?.map((creator) => (
               <li key={creator?.$id}>
                 <UserCard user={creator} />
               </li>

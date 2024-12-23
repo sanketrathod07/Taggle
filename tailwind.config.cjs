@@ -46,6 +46,9 @@ module.exports = {
         inter: ['Inter', 'sans-serif'],
 
       },
+      animation: {
+        pulseCustom: "pulseCustom 1.5s ease-in-out infinite",
+      },
       keyframes: {
         'accordion-down': {
           from: { height: 0 },
@@ -54,6 +57,10 @@ module.exports = {
         'accordion-up': {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: 0 },
+        },
+        pulseCustom: {
+          "0%, 100%": { opacity: 0.5 },
+          "50%": { opacity: 1 },
         },
       },
       animation: {

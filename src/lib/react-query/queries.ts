@@ -25,6 +25,9 @@ import {
   searchPosts,
   savePost,
   deleteSavedPost,
+  getFollowers,
+  getFollowing,
+  unfollowUser,
 } from "@/lib/appwrite/api";
 import { INewPost, INewUser, IUpdatePost, IUpdateUser } from "@/types";
 
@@ -241,6 +244,41 @@ export const useUpdateUser = () => {
       queryClient.invalidateQueries({
         queryKey: [QUERY_KEYS.GET_USER_BY_ID, data?.$id],
       });
+    },
+  });
+};
+
+
+
+
+// Get Followers of a User
+export const useGetUserFollowers = (userId: string) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.GET_USER_FOLLOWERS, userId],
+    queryFn: () => getFollowers(userId),
+    enabled: !!userId,
+  });
+};
+
+// Get Users Followed by a User
+export const useGetUserFollowing = (userId: string) => {
+  return useQuery({
+    queryKey: [QUERY_KEYS.GET_USER_FOLLOWING, userId],
+    queryFn: () => getFollowing(userId),
+    enabled: !!userId,
+  });
+};
+
+
+// Unfollow a User
+export const useUnfollowUser = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ follower, followed }: { follower: string; followed: string }) =>
+      unfollowUser(follower, followed),
+    onSuccess: () => {
+      queryClient.invalidateQueries([QUERY_KEYS.GET_USER_FOLLOWERS]);
+      queryClient.invalidateQueries([QUERY_KEYS.GET_USER_FOLLOWING]);
     },
   });
 };

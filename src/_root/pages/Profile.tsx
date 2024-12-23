@@ -7,23 +7,33 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import { Button } from "@/components/ui";
 import { LikedPosts } from "@/_root/pages";
 import { useUserContext } from "@/context/AuthContext";
-import { useGetUserById } from "@/lib/react-query/queries";
+import { useGetUserById, useGetUserFollowers, useGetUserFollowing } from "@/lib/react-query/queries";
 import { GridPostList, Loader } from "@/components/shared";
+import FollowButton from "@/components/FollowBtn";
+import { useEffect, useState } from "react";
 
-interface StabBlockProps {
-  value: string | number;
+interface StatBlockProps {
+  value: number | string;
   label: string;
 }
 
-const StatBlock = ({ value, label }: StabBlockProps) => (
-  <div className="flex-center gap-2">
-    <p className="small-semibold lg:body-bold text-primary-500">{value}</p>
-    <p className="small-medium lg:base-medium text-light-2">{label}</p>
-  </div>
-);
+const StatBlock = ({ value, label }: StatBlockProps) => {
+  const displayValue =
+    typeof value === "number"
+      ? value >= 1e6
+        ? (value / 1e6).toFixed(1) + "M"
+        : value.toLocaleString()
+      : value;
+
+  return (
+    <div className="flex-center gap-2">
+      <p className="small-semibold lg:body-bold text-primary-500">{displayValue}</p>
+      <p className="small-medium lg:base-medium text-light-2">{label}</p>
+    </div>
+  );
+};
 
 const Profile = () => {
   const { id } = useParams();
@@ -31,13 +41,28 @@ const Profile = () => {
   const { pathname } = useLocation();
 
   const { data: currentUser } = useGetUserById(id || "");
+  const { data: followers } = useGetUserFollowers(id || "");
+  const { data: following } = useGetUserFollowing(id || "");
 
-  if (!currentUser)
+  const [followerCount, setFollowerCount] = useState(1_200_000);
+
+  useEffect(() => {
+    if (currentUser?.$id === "676824d98eb244ad8d65") {
+      const interval = setInterval(() => {
+        setFollowerCount((prevCount) => prevCount + 100_000);
+      }, 5000);
+
+      return () => clearInterval(interval);
+    }
+  }, [currentUser]);
+
+  if (!currentUser) {
     return (
       <div className="flex-center w-full h-full">
         <Loader />
       </div>
     );
+  }
 
   return (
     <div className="profile-container">
@@ -62,8 +87,15 @@ const Profile = () => {
 
             <div className="flex gap-8 mt-10 items-center justify-center xl:justify-start flex-wrap z-20">
               <StatBlock value={currentUser.posts.length} label="Posts" />
-              <StatBlock value={20} label="Followers" />
-              <StatBlock value={20} label="Following" />
+              <StatBlock
+                value={
+                  currentUser.$id === "676824d98eb244ad8d65"
+                    ? followerCount
+                    : followers?.length || 0
+                }
+                label="Followers"
+              />
+              <StatBlock value={following?.length || 0} label="Following" />
             </div>
 
             <p className="small-medium md:base-medium text-center xl:text-left mt-7 max-w-screen-sm">
@@ -75,9 +107,9 @@ const Profile = () => {
             <div className={`${user.id !== currentUser.$id && "hidden"}`}>
               <Link
                 to={`/update-profile/${currentUser.$id}`}
-                className={`h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg ${
-                  user.id !== currentUser.$id && "hidden"
-                }`}>
+                className={`h-12 bg-dark-4 px-5 text-light-1 flex-center gap-2 rounded-lg ${user.id !== currentUser.$id && "hidden"
+                  }`}
+              >
                 <img
                   src={"/assets/icons/edit.svg"}
                   alt="edit"
@@ -90,9 +122,7 @@ const Profile = () => {
               </Link>
             </div>
             <div className={`${user.id === id && "hidden"}`}>
-              <Button type="button" className="shad-button_primary px-8">
-                Follow
-              </Button>
+              <FollowButton follower={user.id} followed={currentUser.$id} />
             </div>
           </div>
         </div>
@@ -102,9 +132,9 @@ const Profile = () => {
         <div className="flex max-w-5xl w-full">
           <Link
             to={`/profile/${id}`}
-            className={`profile-tab rounded-l-lg ${
-              pathname === `/profile/${id}` && "!bg-dark-3"
-            }`}>
+            className={`profile-tab rounded-l-lg ${pathname === `/profile/${id}` && "!bg-dark-3"
+              }`}
+          >
             <img
               src={"/assets/icons/posts.svg"}
               alt="posts"
@@ -115,9 +145,9 @@ const Profile = () => {
           </Link>
           <Link
             to={`/profile/${id}/liked-posts`}
-            className={`profile-tab rounded-r-lg ${
-              pathname === `/profile/${id}/liked-posts` && "!bg-dark-3"
-            }`}>
+            className={`profile-tab rounded-r-lg ${pathname === `/profile/${id}/liked-posts` && "!bg-dark-3"
+              }`}
+          >
             <img
               src={"/assets/icons/like.svg"}
               alt="like"

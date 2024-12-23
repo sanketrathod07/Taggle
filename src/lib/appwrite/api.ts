@@ -544,3 +544,61 @@ export async function updateUser(user: IUpdateUser) {
     console.log(error);
   }
 }
+
+
+// Followers && Following
+
+export const followUser = async (follower: string, followed: string) => {
+  return await databases.createDocument(
+    appwriteConfig.databaseId,
+    appwriteConfig.followersCollectionId,
+    ID.unique(),
+    {
+      follower: follower,
+      followed: followed,
+    }
+  );
+};
+
+
+export const unfollowUser = async (follower: string, followed: string) => {
+  const documents = await databases.listDocuments(
+    appwriteConfig.databaseId,
+    appwriteConfig.followersCollectionId,
+    [
+      Query.equal("follower", follower),
+      Query.equal("followed", followed),
+    ]
+  );
+
+  if (documents.documents.length > 0) {
+    const docId = documents.documents[0].$id;
+    return await databases.deleteDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.followersCollectionId,
+      docId
+    );
+  }
+};
+
+
+
+// Get Followers of a User
+export const getFollowers = async (userId: string) => {
+  const followers = await databases.listDocuments(
+    '676817f3003e653906ef',
+    '67683fc0001918b2e1e8',
+    [Query.equal("followed", userId)]
+  );
+  return followers.documents.map((doc) => doc.follower);
+};
+
+// Get Users Followed by a User
+export const getFollowing = async (userId: string) => {
+  const following = await databases.listDocuments(
+    "676817f3003e653906ef",
+    "67683fc0001918b2e1e8",
+    [Query.equal("follower", userId)]
+  );
+  return following.documents.map((doc) => doc.followed);
+};
